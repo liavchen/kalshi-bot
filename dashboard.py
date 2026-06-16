@@ -30,51 +30,51 @@ st.markdown("""
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 8px; margin-bottom: 6px;
   }
-  .game-title { font-size: 18px; font-weight: 700; color: #ffffff !important; }
-  .game-date  { font-size: 12px; color: #7a88a8 !important; margin-top: 2px; }
-  .badge-yes { background: #0d6e2b; color: #6dffa0 !important; padding: 4px 12px;
-               border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-  .badge-no  { background: #6e1f0d; color: #ffcc99 !important; padding: 4px 12px;
-               border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .game-title { font-size: 20px; font-weight: 700; color: #ffffff !important; }
+  .game-date  { font-size: 14px; color: #7a88a8 !important; margin-top: 3px; }
+  .badge-yes { background: #0d6e2b; color: #6dffa0 !important; padding: 5px 14px;
+               border-radius: 20px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .badge-no  { background: #6e1f0d; color: #ffcc99 !important; padding: 5px 14px;
+               border-radius: 20px; font-size: 13px; font-weight: 700; white-space: nowrap; }
 
   /* Opportunity headline */
   .opp-headline {
-    font-size: 20px; font-weight: 800; color: #ffffff !important;
-    margin: 14px 0 6px 0; line-height: 1.25;
+    font-size: 22px; font-weight: 800; color: #ffffff !important;
+    margin: 16px 0 8px 0; line-height: 1.3;
   }
   .opp-why {
-    font-size: 14px; color: #c0cce0 !important; line-height: 1.6;
-    margin-bottom: 16px;
+    font-size: 16px; color: #c0cce0 !important; line-height: 1.7;
+    margin-bottom: 18px;
   }
   .opp-why b { color: #ffffff !important; }
   .opp-why .hi { color: #5defa0 !important; font-weight: 700; }
   .opp-why .lo { color: #ff9966 !important; font-weight: 700; }
 
   /* Play steps */
-  .play-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+  .play-block { display: flex; flex-direction: column; gap: 12px; margin-bottom: 6px; }
   .play-row {
-    display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
-    background: #111825; border-radius: 10px; padding: 12px 14px;
+    display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+    background: #111825; border-radius: 10px; padding: 14px 16px;
   }
   .play-icon {
-    font-size: 18px; flex-shrink: 0; margin-top: 1px; width: 26px; text-align: center;
+    font-size: 20px; flex-shrink: 0; margin-top: 2px; width: 28px; text-align: center;
   }
   .play-content { flex: 1; min-width: 0; }
   .play-label {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.07em; color: #7a88a8 !important; margin-bottom: 3px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: #7a88a8 !important; margin-bottom: 5px;
   }
   .play-text {
-    font-size: 14px; color: #dce6f5 !important; line-height: 1.5;
+    font-size: 16px; color: #dce6f5 !important; line-height: 1.6;
   }
   .play-text b  { color: #ffffff !important; }
   .play-text .g { color: #5defa0 !important; font-weight: 700; }
   .play-text .r { color: #ff7070 !important; font-weight: 700; }
-  .play-text .m { color: #a8b4cc !important; }
+  .play-text .m { color: #b0bcd0 !important; }
   .play-text .y { color: #ffd966 !important; font-weight: 700; }
 
   .divider { border-top: 1px solid #2a3147; margin: 14px 0; }
-  .ticker-line { font-size: 11px; color: #4a5570 !important; margin-top: 12px; }
+  .ticker-line { font-size: 13px; color: #4a5570 !important; margin-top: 12px; }
   .green { color: #5defa0 !important; font-weight: 700; }
   .gray  { color: #7a88a8 !important; }
 </style>
