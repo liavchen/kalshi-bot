@@ -139,6 +139,93 @@ st.success(
     f"+ **{watch_count} watching** across {total_days} game days"
 )
 
+# ── Portfolio Builder ──────────────────────────────────────────────────────────
+with st.expander("💼 Portfolio Builder — spread your budget across signals", expanded=False):
+    if not signals:
+        st.info("No actionable signals right now. Lower the edge threshold to see more options.")
+    else:
+        pb_budget = st.number_input(
+            "Total portfolio budget ($)", min_value=2, max_value=500, value=5, step=1,
+            key="pb_budget"
+        )
+        st.caption("Pick the signals you want to play — we'll split your budget weighted by edge strength.")
+
+        # Checkbox for each actionable signal
+        top_signals = sorted(signals, key=lambda x: -x.edge)[:12]
+        selected_keys = []
+        for sig in top_signals:
+            side_label = "YES" if sig.side == "yes" else "NO"
+            label = (
+                f"**{sig.game_title}** ({sig.game_date}) — "
+                f"{sig.outcome} {side_label} · Edge **+{sig.edge:.1%}** · "
+                f"Kalshi: {round(sig.entry_price*100)}¢ · Books: {round(sig.fair_prob*100)}%"
+            )
+            if st.checkbox(label, key=f"pb_{sig.kalshi_ticker}"):
+                selected_keys.append(sig.kalshi_ticker)
+
+        selected_sigs = [s for s in top_signals if s.kalshi_ticker in selected_keys]
+
+        if selected_sigs:
+            st.divider()
+            st.markdown("#### 📊 Your allocation plan")
+
+            # Edge-weighted allocation, minimum $1 per bet
+            total_edge = sum(s.edge for s in selected_sigs)
+            raw_allocs = {s.kalshi_ticker: (s.edge / total_edge) * pb_budget for s in selected_sigs}
+
+            # Enforce $1 minimum — scale down others if needed
+            min_alloc = 1.0
+            allocs = {}
+            for s in selected_sigs:
+                allocs[s.kalshi_ticker] = max(min_alloc, round(raw_allocs[s.kalshi_ticker] * 2) / 2)
+
+            # Trim total back to budget if rounding pushed it over
+            total_alloc = sum(allocs.values())
+            if total_alloc > pb_budget:
+                largest = max(allocs, key=allocs.get)
+                allocs[largest] -= (total_alloc - pb_budget)
+                allocs[largest] = round(allocs[largest] * 2) / 2
+
+            # Summary table
+            total_cost = 0
+            total_ev   = 0
+            rows = []
+            for sig in selected_sigs:
+                alloc    = allocs[sig.kalshi_ticker]
+                entry_c  = round(sig.entry_price * 100)
+                n_contracts = int(alloc / sig.entry_price)
+                cost     = round(n_contracts * sig.entry_price, 2)
+                ev       = round(cost * (1 + sig.roi_target), 2)
+                total_cost += cost
+                total_ev   += ev
+                rows.append({
+                    "Game": sig.game_title,
+                    "Date": sig.game_date,
+                    "Bet": f"{sig.outcome} {'YES' if sig.side=='yes' else 'NO'}",
+                    "Allocate": f"${alloc:.2f}",
+                    "Contracts": n_contracts,
+                    "Entry": f"{entry_c}¢",
+                    "Edge": f"+{sig.edge:.1%}",
+                    "If wins → est.": f"${ev:.2f}",
+                })
+
+            import pandas as pd
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total deployed", f"${total_cost:.2f}", f"of ${pb_budget:.2f} budget")
+            col2.metric("Expected return", f"${total_ev:.2f}", f"+{(total_ev/total_cost - 1):.0%} blended EV")
+            col3.metric("Signals selected", len(selected_sigs))
+
+            st.caption(
+                "Allocation is weighted by edge — stronger mispricings get more of your budget. "
+                "Minimum $1 per bet. 'If wins' assumes price reaches fair value (not full $1 payout)."
+            )
+        elif selected_keys == [] and len(top_signals) > 0:
+            st.info("Check the signals above to see your portfolio plan.")
+
+st.divider()
+
 # ── Group by date ─────────────────────────────────────────────────────────────
 from collections import defaultdict
 from datetime import datetime
