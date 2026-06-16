@@ -5,4 +5,4 @@ pandas==2.2.3
 schedule==1.2.1
 websocket-client==1.7.0
 colorlog==6.8.0
-streamlit==1.45.1
+streamlit==1.41.0
