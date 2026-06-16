@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: kalshi-wc-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: KALSHI_ENV
+        value: prod
+      - key: KALSHI_API_KEY_ID
+        sync: false
+      - key: KALSHI_PRIVATE_KEY
+        sync: false
+      - key: ODDS_API_KEY
+        sync: false
+      - key: EDGE_THRESHOLD
+        value: "0.02"
+      - key: MAX_POSITION_USD
+        value: "50"
+      - key: MAX_DAILY_LOSS_USD
+        value: "100"
