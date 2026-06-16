@@ -102,7 +102,7 @@ st.divider()
 WATCH_THRESHOLD = 0.01   # always scan at ≥1% to show same-day games
 
 @st.cache_data(ttl=900, show_spinner=False)
-def run_scan(edge_threshold: float) -> list[Signal]:
+def run_scan(_cache_key: float) -> list[Signal]:
     import os
     # Scan wide — always pull everything ≥1% so same-day games appear
     os.environ["EDGE_THRESHOLD"] = str(WATCH_THRESHOLD)
@@ -140,13 +140,34 @@ st.success(
 )
 
 # ── Portfolio Builder ──────────────────────────────────────────────────────────
+@st.cache_data(ttl=60, show_spinner=False)
+def fetch_balance() -> float:
+    from src.kalshi_client import KalshiClient
+    try:
+        data = KalshiClient().get_balance()
+        # balance is in cents
+        return round(data.get("balance", 0) / 100, 2)
+    except Exception:
+        return 0.0
+
 with st.expander("💼 Portfolio Builder — spread your budget across signals", expanded=False):
     if not signals:
         st.info("No actionable signals right now. Lower the edge threshold to see more options.")
     else:
+        kalshi_balance = fetch_balance()
+        if kalshi_balance > 0:
+            st.caption(f"💰 Your Kalshi cash balance: **${kalshi_balance:.2f}**")
+        else:
+            st.caption("💰 Could not fetch balance — enter manually below.")
+
         pb_budget = st.number_input(
-            "Total portfolio budget ($)", min_value=2, max_value=500, value=5, step=1,
-            key="pb_budget"
+            "Budget to deploy ($)",
+            min_value=1.0,
+            max_value=float(kalshi_balance) if kalshi_balance > 0 else 500.0,
+            value=float(kalshi_balance) if kalshi_balance > 0 else 5.0,
+            step=0.5,
+            key="pb_budget",
+            help="Defaults to your full Kalshi balance. Lower it to keep some cash in reserve."
         )
         st.caption("Pick the signals you want to play — we'll split your budget weighted by edge strength.")
 
@@ -301,16 +322,11 @@ def render_card(sig: Signal, stake_usd: float):
     if good_scorer == "A":
         good_sc, good_team = sc_a, sig.team_a
         bad_sc,  bad_team  = sc_b, sig.team_b
-        good_p = sc["p_A_scores_first"]
-        bad_p  = sc["p_B_scores_first"]
     elif good_scorer == "B":
         good_sc, good_team = sc_b, sig.team_b
         bad_sc,  bad_team  = sc_a, sig.team_a
-        good_p = sc["p_B_scores_first"]
-        bad_p  = sc["p_A_scores_first"]
     else:
         good_sc = bad_sc = good_team = bad_team = None
-        good_p  = bad_p = 0.5
 
     # ── Narrative: headline + action + why ───────────────────────────────────
     if sig.side == "yes":
@@ -352,9 +368,6 @@ def render_card(sig: Signal, stake_usd: float):
         good_roi    = good_sc["roi"]
         good_exit_c = round(good_sc["exit_price"] * 100)
         good_payout = good_sc["payout_usd"]
-        bad_roi     = bad_sc["roi"]
-        bad_exit_c  = round(bad_sc["exit_price"] * 100)
-        bad_payout  = bad_sc["payout_usd"]
         multiplier  = round(1 + good_roi, 1)
         hits_2x     = good_roi >= 0.90
 
