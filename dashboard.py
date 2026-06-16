@@ -19,107 +19,64 @@ st.set_page_config(
 # ── Styles ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  /* Force dark background on all custom cards */
   .card {
     background: #1a1f2e !important;
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 16px;
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
     border: 1px solid #2a3147;
   }
-  .game-title { font-size: 20px; font-weight: 700; color: #ffffff !important; margin-bottom: 2px; }
-  .game-date  { font-size: 13px; color: #a8b4cc !important; margin-bottom: 14px; }
-  .badge-yes  { background: #0d6e2b; color: #6dffa0 !important; padding: 4px 12px;
-                border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-  .badge-no   { background: #6e1f0d; color: #ffcc99 !important; padding: 4px 12px;
-                border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-  .metric-label { font-size: 11px; color: #a8b4cc !important; margin-bottom: 4px;
-                  text-transform: uppercase; letter-spacing: 0.06em; }
-  .metric-big   { font-size: 24px; font-weight: 700; color: #ffffff !important; line-height: 1.1; }
-  .metric-sub   { font-size: 12px; color: #c8d0e0 !important; margin-top: 2px; }
-  .scenario-block {
-    background: #0d1117 !important;
-    border: 1px solid #2a3147;
-    border-radius: 8px;
-    padding: 12px 16px;
-    color: #e0e6f0 !important;
-    font-size: 13px;
-  }
-  .scenario-block b { color: #ffffff !important; }
-  .green { color: #5defa0 !important; font-weight: 700; }
-  .red   { color: #ff7070 !important; font-weight: 700; }
-  .gray  { color: #a8b4cc !important; }
-  .divider { border-top: 1px solid #2a3147; margin: 14px 0; }
-  .ticker-line { font-size: 11px; color: #6a7590 !important; margin-top: 10px; }
-
-  /* Metrics row — wraps on mobile */
-  .metrics-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px 32px;
-    margin-bottom: 16px;
-  }
-  .metric-cell { min-width: 90px; }
-
-  /* Scenarios row — stacks on mobile */
-  .scenarios-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .scenarios-row .scenario-block { flex: 1 1 240px; }
-
-  /* Card header — badge wraps below on very small screens */
   .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 8px; margin-bottom: 6px;
   }
+  .game-title { font-size: 18px; font-weight: 700; color: #ffffff !important; }
+  .game-date  { font-size: 12px; color: #7a88a8 !important; margin-top: 2px; }
+  .badge-yes { background: #0d6e2b; color: #6dffa0 !important; padding: 4px 12px;
+               border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .badge-no  { background: #6e1f0d; color: #ffcc99 !important; padding: 4px 12px;
+               border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 
-  /* Game plan block */
-  .game-plan {
-    background: #0a0f1a;
-    border: 1px solid #1e3a5f;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 4px;
+  /* Opportunity headline */
+  .opp-headline {
+    font-size: 20px; font-weight: 800; color: #ffffff !important;
+    margin: 14px 0 6px 0; line-height: 1.25;
   }
-  .gp-title {
-    font-size: 12px;
-    font-weight: 700;
-    color: #7ab3e0 !important;
-    letter-spacing: 0.08em;
-    margin-bottom: 12px;
+  .opp-why {
+    font-size: 14px; color: #c0cce0 !important; line-height: 1.6;
+    margin-bottom: 16px;
   }
-  .gp-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
+  .opp-why b { color: #ffffff !important; }
+  .opp-why .hi { color: #5defa0 !important; font-weight: 700; }
+  .opp-why .lo { color: #ff9966 !important; font-weight: 700; }
+
+  /* Play steps */
+  .play-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+  .play-row {
+    display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
+    background: #111825; border-radius: 10px; padding: 12px 14px;
   }
-  .gp-step {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: 12px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-top: 1px;
+  .play-icon {
+    font-size: 18px; flex-shrink: 0; margin-top: 1px; width: 26px; text-align: center;
   }
-  .buy-step  { background: #0d3d6e; color: #7ab3e0 !important; }
-  .sell-step { background: #0d4a1f; color: #5defa0 !important; }
-  .cut-step  { background: #4a1f0d; color: #ffaa70 !important; }
-  .edge-step { background: #2a2f42; color: #a8b4cc !important; }
-  .gp-body {
-    font-size: 13px;
-    color: #d0dae8 !important;
-    line-height: 1.5;
+  .play-content { flex: 1; min-width: 0; }
+  .play-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: #7a88a8 !important; margin-bottom: 3px;
   }
-  .gp-body b { color: #ffffff !important; }
+  .play-text {
+    font-size: 14px; color: #dce6f5 !important; line-height: 1.5;
+  }
+  .play-text b  { color: #ffffff !important; }
+  .play-text .g { color: #5defa0 !important; font-weight: 700; }
+  .play-text .r { color: #ff7070 !important; font-weight: 700; }
+  .play-text .m { color: #a8b4cc !important; }
+  .play-text .y { color: #ffd966 !important; font-weight: 700; }
+
+  .divider { border-top: 1px solid #2a3147; margin: 14px 0; }
+  .ticker-line { font-size: 11px; color: #4a5570 !important; margin-top: 12px; }
+  .green { color: #5defa0 !important; font-weight: 700; }
+  .gray  { color: #7a88a8 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -211,12 +168,11 @@ def render_card(sig: Signal, stake_usd: float):
             good_scorer, bad_scorer = "A", "B"
         elif sig.outcome.lower() in (sig.team_b.lower(), sig.team_b.lower().split()[0]):
             good_scorer, bad_scorer = "B", "A"
-        else:  # Tie — neither team scoring helps us
+        else:
             good_scorer, bad_scorer = None, None
     else:
-        # Buying NO on team X — we want the OTHER team to score
         if sig.outcome.lower() in (sig.team_a.lower(), sig.team_a.lower().split()[0]):
-            good_scorer, bad_scorer = "B", "A"   # we short team A → want B to score
+            good_scorer, bad_scorer = "B", "A"
         elif sig.outcome.lower() in (sig.team_b.lower(), sig.team_b.lower().split()[0]):
             good_scorer, bad_scorer = "A", "B"
         else:
@@ -224,12 +180,10 @@ def render_card(sig: Signal, stake_usd: float):
 
     sc_a = sc["if_A_scores_first"]
     sc_b = sc["if_B_scores_first"]
-
-    # ── Game plan calculations ────────────────────────────────────────────────
-    cost_usd   = sc["cost_usd"]
-    target_2x  = round(cost_usd * 2, 2)
-    entry_c    = round(sig.entry_price * 100, 1)   # entry in cents
-    target_c   = round(sig.entry_price * 2 * 100, 1)  # 2x in cents
+    cost_usd = sc["cost_usd"]
+    contracts = sc["contracts"]
+    entry_c  = round(sig.entry_price * 100)
+    fair_c   = round(sig.fair_prob * 100)
 
     if good_scorer == "A":
         good_sc, good_team = sc_a, sig.team_a
@@ -242,95 +196,111 @@ def render_card(sig: Signal, stake_usd: float):
         good_p = sc["p_B_scores_first"]
         bad_p  = sc["p_A_scores_first"]
     else:
-        good_sc = bad_sc = None
+        good_sc = bad_sc = good_team = bad_team = None
+        good_p  = bad_p = 0.5
 
-    if good_sc:
-        good_exit_c  = round(good_sc["exit_price"] * 100, 1)
-        good_payout  = good_sc["payout_usd"]
-        good_roi     = good_sc["roi"]
-        bad_exit_c   = round(bad_sc["exit_price"] * 100, 1)
-        bad_payout   = bad_sc["payout_usd"]
-        bad_roi      = bad_sc["roi"]
-
-        hits_2x = good_roi >= 0.95   # ≥95% ROI ≈ 2x
-        sell_icon   = "🟢" if hits_2x else "🟡"
-        sell_label  = "SELL — 2x reached ✓" if hits_2x else f"SELL — est. {good_roi:.0%} gain (below 2x)"
-        sell_detail = f"sell all {sc['contracts']} contracts @ ~{good_exit_c:.0f}¢ → ${good_payout:.2f}"
-
-        cut_roi_str = f"{bad_roi:.0%}" if bad_roi < 0 else f"+{bad_roi:.0%}"
-        cut_color   = "red" if bad_roi < -0.20 else "gray"
-        cut_label   = "CUT LOSS — price will drop" if bad_roi < -0.20 else "HOLD — small impact"
-        cut_detail  = f"est. {bad_exit_c:.0f}¢ → ${bad_payout:.2f} ({cut_roi_str})"
-
-        game_plan_html = f"""
-        <div class="game-plan">
-          <div class="gp-title">📋 GAME PLAN</div>
-          <div class="gp-row">
-            <span class="gp-step buy-step">① BUY NOW</span>
-            <span class="gp-body">
-              <b>{sc['contracts']} contracts</b> × {entry_c:.0f}¢ = <b>${cost_usd:.2f} total cost</b>
-              &nbsp;·&nbsp; <span class="gray">2× target: {target_c:.0f}¢ per contract (${target_2x:.2f})</span>
-            </span>
-          </div>
-          <div class="gp-row">
-            <span class="gp-step sell-step">{sell_icon} SELL TRIGGER</span>
-            <span class="gp-body">
-              <b>{good_team}</b> scores first ({good_p:.0%} chance) → <span class="green">{sell_label}</span><br>
-              <span class="gray">{sell_detail}</span>
-            </span>
-          </div>
-          <div class="gp-row">
-            <span class="gp-step cut-step">⚠ IF WRONG</span>
-            <span class="gp-body">
-              <b>{bad_team}</b> scores first ({bad_p:.0%} chance) → <span class="{cut_color}">{cut_label}</span><br>
-              <span class="gray">{cut_detail} — your call to hold or exit</span>
-            </span>
-          </div>
-          <div class="gp-row" style="margin-top:6px;">
-            <span class="gp-step edge-step">💡 EDGE</span>
-            <span class="gp-body gray">
-              Books price this at {sig.fair_prob:.1%} · Kalshi sells it at {entry_c:.0f}¢ · you're buying {sig.edge:.1%} below fair value
-            </span>
-          </div>
-        </div>"""
+    # ── Narrative: headline + why ─────────────────────────────────────────────
+    if sig.side == "yes":
+        headline = f"{sig.outcome} looks undervalued — Kalshi hasn't caught up to the books yet"
+        why_html = (
+            f"Major sportsbooks across 10+ platforms give <b>{sig.outcome}</b> a "
+            f"<span class='hi'>{fair_c}%</span> chance to win. "
+            f"Kalshi is still pricing them at <span class='lo'>{entry_c}¢</span> — "
+            f"a <b>{sig.edge:.0%} gap</b> in your favor. "
+            f"That gap is your edge: buy now before the market corrects."
+        )
     else:
-        # Tie contract — no single goal is the trigger
-        game_plan_html = f"""
-        <div class="game-plan">
-          <div class="gp-title">📋 GAME PLAN</div>
-          <div class="gp-row">
-            <span class="gp-step buy-step">① BUY NOW</span>
-            <span class="gp-body">
-              <b>{sc['contracts']} contracts</b> × {entry_c:.0f}¢ = <b>${cost_usd:.2f}</b>
-              &nbsp;·&nbsp; <span class="gray">2× target: {target_c:.0f}¢ (${target_2x:.2f})</span>
-            </span>
-          </div>
-          <div class="gp-row">
-            <span class="gp-step sell-step">🎯 SELL TRIGGER</span>
-            <span class="gp-body">
-              Sell if price rises toward <b>{target_c:.0f}¢</b> as the match approaches.<br>
-              <span class="gray">TIE contracts gain value when the match stays level late. Watch at 60–75 min.</span>
-            </span>
-          </div>
-          <div class="gp-row">
-            <span class="gp-step cut-step">⚠ IF WRONG</span>
-            <span class="gp-body gray">Either team scoring first collapses TIE price. Exit quickly after a goal.</span>
-          </div>
-        </div>"""
-
-    def fmt_scenario(sc_data: dict, scorer_key: str) -> str:
-        payout = sc_data["payout_usd"]
-        roi = sc_data["roi"]
-        color = "green" if roi > 0.05 else ("red" if roi < -0.05 else "gray")
-        scorer_name = sig.team_a if scorer_key == "A" else sig.team_b
-        roi_str = f"+{roi:.0%}" if roi > 0 else f"{roi:.0%}"
-        return (
-            f"<b>{scorer_name}</b> scores first "
-            f"<span class='{color}'>${payout:.2f} ({roi_str})</span> "
-            f"<span class='gray'>· {sc[f'p_{scorer_key}_scores_first']:.0%} chance</span>"
+        kalshi_yes_c = round((1 - sig.entry_price) * 100)
+        other_team = sig.team_b if sig.outcome.lower() in sig.team_a.lower() else sig.team_a
+        headline = f"{sig.outcome} is overpriced on Kalshi — the crowd is too confident"
+        why_html = (
+            f"Kalshi bettors are pricing <b>{sig.outcome}</b> at "
+            f"<span class='lo'>{kalshi_yes_c}¢</span> to win, but major sportsbooks "
+            f"only give them <span class='hi'>{fair_c}%</span>. "
+            f"Buying NO means you're betting against the hype — "
+            f"you win if <b>{other_team}</b> wins or the match draws."
         )
 
-    contract_desc = "YES pays $1 if this outcome happens" if sig.side == "yes" else "NO pays $1 if this does NOT happen"
+    # ── Steps ────────────────────────────────────────────────────────────────
+    buy_text = (
+        f"Buy <b>{contracts} contracts</b> at <b>{entry_c}¢ each</b> = "
+        f"<b>${cost_usd:.2f} total</b>. "
+        f"<span class='m'>Your 2× exit price is {entry_c * 2}¢ per contract (${cost_usd * 2:.2f} back).</span>"
+    )
+
+    if good_sc:
+        good_roi    = good_sc["roi"]
+        good_exit_c = round(good_sc["exit_price"] * 100)
+        good_payout = good_sc["payout_usd"]
+        bad_roi     = bad_sc["roi"]
+        bad_exit_c  = round(bad_sc["exit_price"] * 100)
+        bad_payout  = bad_sc["payout_usd"]
+        multiplier  = round(1 + good_roi, 1)
+        hits_2x     = good_roi >= 0.90
+
+        if hits_2x:
+            sell_result = f"<span class='g'>${good_payout:.2f} back — that's {multiplier:.1f}× your money ✓</span>"
+        else:
+            sell_result = f"<span class='y'>${good_payout:.2f} back (+{good_roi:.0%}) — not quite 2× but solid</span>"
+
+        sell_text = (
+            f"The moment <b>{good_team}</b> scores the first goal, "
+            f"go to Kalshi and sell all {contracts} contracts. "
+            f"Price should jump to ~<b>{good_exit_c}¢</b> → {sell_result}. "
+            f"<span class='m'>({good_p:.0%} chance they score first.)</span>"
+        )
+
+        if bad_roi < -0.25:
+            wrong_action = f"<span class='r'>Sell quickly — don't wait.</span> Price will fall to ~{bad_exit_c}¢."
+        elif bad_roi < 0:
+            wrong_action = f"Your call. Price drops to ~{bad_exit_c}¢ but <b>{good_team}</b> can still come back — holding is reasonable."
+        else:
+            wrong_action = f"You're actually still OK. Price barely moves — <span class='g'>hold your position.</span>"
+
+        wrong_text = (
+            f"If <b>{bad_team}</b> scores first ({bad_p:.0%} chance), "
+            f"your contracts drop to ~<b>{bad_exit_c}¢</b> (est. ${bad_payout:.2f}). "
+            f"{wrong_action}"
+        )
+
+        # Follow-up side play
+        if sig.side == "yes" and sig.p_tie >= 0.22:
+            side_play = (
+                f"Consider putting <b>$2–3 on Tie</b> as a secondary position. "
+                f"Books give this match a <b>{sig.p_tie:.0%} draw probability</b> — if both teams stay "
+                f"level past the 70-minute mark, Tie contracts spike fast and you're hedged either way."
+            )
+        elif sig.side == "no":
+            other = sig.team_b if sig.outcome.lower() in sig.team_a.lower() else sig.team_a
+            side_play = (
+                f"Pair this with a small <b>YES on {other}</b> if they're priced under their fair value too. "
+                f"Both bets profit if {sig.outcome} underperforms — you're doubly covered."
+            )
+        else:
+            side_play = None
+    else:
+        # Tie contract
+        sell_text  = (
+            f"Hold through the first half. If the game is still level past <b>65 minutes</b>, "
+            f"Tie contracts will start climbing fast — sell when you're up <b>80–100%</b>."
+        )
+        wrong_text = (
+            f"The moment either team scores, Tie price collapses. "
+            f"<span class='r'>Exit immediately after any goal.</span>"
+        )
+        side_play  = None
+
+    side_play_row = ""
+    if side_play:
+        side_play_row = f"""
+        <div class="play-row">
+          <div class="play-icon">💡</div>
+          <div class="play-content">
+            <div class="play-label">Side play</div>
+            <div class="play-text">{side_play}</div>
+          </div>
+        </div>"""
+
     with st.container():
         st.markdown(f"""
         <div class="card">
@@ -341,48 +311,42 @@ def render_card(sig: Signal, stake_usd: float):
             </div>
             <div>{badge}</div>
           </div>
-          <div class="metrics-row">
-            <div class="metric-cell">
-              <div class="metric-label">CONTRACT</div>
-              <div class="metric-big">{sig.outcome}</div>
-              <div class="metric-sub">{contract_desc}</div>
+
+          <div class="opp-headline">{headline}</div>
+          <div class="opp-why">{why_html}</div>
+
+          <div class="play-block">
+            <div class="play-row">
+              <div class="play-icon">①</div>
+              <div class="play-content">
+                <div class="play-label">Buy now</div>
+                <div class="play-text">{buy_text}</div>
+              </div>
             </div>
-            <div class="metric-cell">
-              <div class="metric-label">ENTRY PRICE</div>
-              <div class="metric-big">{entry_c:.0f}¢</div>
-              <div class="metric-sub">fair value: {sig.fair_prob:.1%}</div>
+            <div class="play-row">
+              <div class="play-icon">🎯</div>
+              <div class="play-content">
+                <div class="play-label">When to sell</div>
+                <div class="play-text">{sell_text}</div>
+              </div>
             </div>
-            <div class="metric-cell">
-              <div class="metric-label">CONTRACTS (${stake_usd:.0f})</div>
-              <div class="metric-big">{sc["contracts"]}</div>
-              <div class="metric-sub">cost ≈ ${cost_usd:.2f}</div>
-            </div>
-            <div class="metric-cell">
-              <div class="metric-label">EDGE</div>
-              <div class="metric-big green">+{sig.edge:.1%}</div>
-              <div class="metric-sub">vs major books</div>
-            </div>
-            <div class="metric-cell">
-              <div class="metric-label">EXPECTED VALUE</div>
-              <div class="metric-big">${sc["expected_value_usd"]:.2f}</div>
-              <div class="metric-sub">on ${stake_usd:.0f} entry</div>
-            </div>
-          </div>
-          <div class="divider"></div>
-          {game_plan_html}
-          <div class="divider"></div>
-          <div style="font-size:12px; color:#a8b4cc; margin-bottom:10px; font-weight:700; letter-spacing:0.05em;">
-            📊 FIRST GOAL PRICE IMPACT
-          </div>
-          <div class="scenarios-row">
-            <div class="scenario-block">
-              {fmt_scenario(sc_a, "A")}
-            </div>
-            <div class="scenario-block">
-              {fmt_scenario(sc_b, "B")}
+            {side_play_row}
+            <div class="play-row">
+              <div class="play-icon">⚠️</div>
+              <div class="play-content">
+                <div class="play-label">If it goes wrong</div>
+                <div class="play-text">{wrong_text}</div>
+              </div>
             </div>
           </div>
-          <div class="ticker-line">Ticker: {sig.kalshi_ticker}</div>
+
+          <div class="ticker-line">
+            Edge vs books: +{sig.edge:.1%} &nbsp;·&nbsp;
+            Fair value: {fair_c}¢ &nbsp;·&nbsp;
+            Kalshi entry: {entry_c}¢ &nbsp;·&nbsp;
+            EV: ${sc["expected_value_usd"]:.2f} &nbsp;·&nbsp;
+            Ticker: {sig.kalshi_ticker}
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
