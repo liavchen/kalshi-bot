@@ -243,52 +243,63 @@ def render_card(sig: Signal, stake_usd: float):
         else:
             sell_result = f"<span class='y'>${good_payout:.2f} back (+{good_roi:.0%}) — not quite 2× but solid</span>"
 
+        # Sell: target is when team LEADS, not just scores
         sell_text = (
-            f"The moment <b>{good_team}</b> scores the first goal, "
-            f"go to Kalshi and sell all {contracts} contracts. "
-            f"Price should jump to ~<b>{good_exit_c}¢</b> → {sell_result}. "
-            f"<span class='m'>({good_p:.0%} chance they score first.)</span>"
+            f"Your best exit is when <b>{good_team} takes the lead</b> — "
+            f"that's when the contract peaks, not just when they score. "
+            f"If they score to go ahead (1-0, 2-1, etc.), price jumps to ~<b>{good_exit_c}¢</b> → {sell_result}. "
+            f"<span class='m'>Pro tip: if they equalize first (e.g., 1-1), consider selling half your position "
+            f"to lock in recovery, and ride the rest for the lead.</span>"
         )
 
-        if bad_roi < -0.25:
-            wrong_action = f"<span class='r'>Sell quickly — don't wait.</span> Price will fall to ~{bad_exit_c}¢."
-        elif bad_roi < 0:
-            wrong_action = f"Your call. Price drops to ~{bad_exit_c}¢ but <b>{good_team}</b> can still come back — holding is reasonable."
-        else:
-            wrong_action = f"You're actually still OK. Price barely moves — <span class='g'>hold your position.</span>"
-
+        # Wrong: time-aware, patient advice
         wrong_text = (
-            f"If <b>{bad_team}</b> scores first ({bad_p:.0%} chance), "
-            f"your contracts drop to ~<b>{bad_exit_c}¢</b> (est. ${bad_payout:.2f}). "
-            f"{wrong_action}"
+            f"If <b>{bad_team}</b> scores first — <b>don't panic sell</b>. Timing in soccer is everything:<br>"
+            f"<span class='m'>• <b>Before min 45:</b> Hold comfortably. A goal this early means little — "
+            f"{good_team} has a full half to respond. Price will recover if they equalize.</span><br>"
+            f"<span class='m'>• <b>Min 45–65:</b> Stay patient. Watch the momentum. "
+            f"If {good_team} is pressing and creating chances, hold. If they look flat, consider a partial exit.</span><br>"
+            f"<span class='m'>• <b>Min 65–75:</b> If still down, start watching to exit. "
+            f"When {good_team} equalizes — that's your sell signal, don't wait for the lead.</span><br>"
+            f"<span class='m'>• <b>After min 75:</b> Window is closing. If still trailing, "
+            f"cut your loss now rather than risk full collapse.</span><br>"
+            f"<b>The real rule:</b> sell when {good_team} ties or leads, not when the other team scores."
         )
 
-        # Follow-up side play
-        if sig.side == "yes" and sig.p_tie >= 0.22:
+        # Side play — before game AND in-game Tie spike
+        if sig.side == "yes" and sig.p_tie >= 0.20:
             side_play = (
-                f"Consider putting <b>$2–3 on Tie</b> as a secondary position. "
-                f"Books give this match a <b>{sig.p_tie:.0%} draw probability</b> — if both teams stay "
-                f"level past the 70-minute mark, Tie contracts spike fast and you're hedged either way."
+                f"<b>Before the game:</b> consider $2–3 on Tie — "
+                f"books give this match a <b>{sig.p_tie:.0%} draw chance</b>, which is meaningful. "
+                f"<b>During the game:</b> if the score reaches 1-1 after minute 55, "
+                f"quickly buy a small Tie position — draw contracts spike when it's even late, "
+                f"and you can flip it for a fast gain whether your main bet holds or not. "
+                f"This is exactly how you can make money even when the game goes sideways."
             )
         elif sig.side == "no":
             other = sig.team_b if sig.outcome.lower() in sig.team_a.lower() else sig.team_a
             side_play = (
-                f"Pair this with a small <b>YES on {other}</b> if they're priced under their fair value too. "
-                f"Both bets profit if {sig.outcome} underperforms — you're doubly covered."
+                f"Pair with a small <b>YES on {other}</b>. "
+                f"Both positions profit if {sig.outcome} underperforms — "
+                f"you're covered whether {other} wins or the game draws."
             )
         else:
             side_play = None
     else:
         # Tie contract
-        sell_text  = (
-            f"Hold through the first half. If the game is still level past <b>65 minutes</b>, "
-            f"Tie contracts will start climbing fast — sell when you're up <b>80–100%</b>."
+        sell_text = (
+            f"Hold through the first half. If the game is still 0-0 past <b>minute 65</b>, "
+            f"Tie contracts will climb fast as the draw becomes more likely. "
+            f"Sell when you're up <b>80–100%</b> — don't wait for full time, "
+            f"because one late goal collapses the price instantly."
         )
         wrong_text = (
-            f"The moment either team scores, Tie price collapses. "
-            f"<span class='r'>Exit immediately after any goal.</span>"
+            f"If either team scores in the <b>first 60 minutes</b>, hold briefly — "
+            f"late equalizers happen often in soccer and would spike your Tie value. "
+            f"But if a goal comes <b>after minute 70</b> with the game still 1-0, "
+            f"<span class='r'>exit quickly</span> — the window for a draw is closing fast."
         )
-        side_play  = None
+        side_play = None
 
     side_play_row = ""
     if side_play:
