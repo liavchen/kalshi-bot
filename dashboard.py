@@ -78,6 +78,48 @@ st.markdown("""
     gap: 8px;
     margin-bottom: 14px;
   }
+
+  /* Game plan block */
+  .game-plan {
+    background: #0a0f1a;
+    border: 1px solid #1e3a5f;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 4px;
+  }
+  .gp-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7ab3e0 !important;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .gp-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .gp-step {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .buy-step  { background: #0d3d6e; color: #7ab3e0 !important; }
+  .sell-step { background: #0d4a1f; color: #5defa0 !important; }
+  .cut-step  { background: #4a1f0d; color: #ffaa70 !important; }
+  .edge-step { background: #2a2f42; color: #a8b4cc !important; }
+  .gp-body {
+    font-size: 13px;
+    color: #d0dae8 !important;
+    line-height: 1.5;
+  }
+  .gp-body b { color: #ffffff !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -183,6 +225,99 @@ def render_card(sig: Signal, stake_usd: float):
     sc_a = sc["if_A_scores_first"]
     sc_b = sc["if_B_scores_first"]
 
+    # ── Game plan calculations ────────────────────────────────────────────────
+    cost_usd   = sc["cost_usd"]
+    target_2x  = round(cost_usd * 2, 2)
+    entry_c    = round(sig.entry_price * 100, 1)   # entry in cents
+    target_c   = round(sig.entry_price * 2 * 100, 1)  # 2x in cents
+
+    if good_scorer == "A":
+        good_sc, good_team = sc_a, sig.team_a
+        bad_sc,  bad_team  = sc_b, sig.team_b
+        good_p = sc["p_A_scores_first"]
+        bad_p  = sc["p_B_scores_first"]
+    elif good_scorer == "B":
+        good_sc, good_team = sc_b, sig.team_b
+        bad_sc,  bad_team  = sc_a, sig.team_a
+        good_p = sc["p_B_scores_first"]
+        bad_p  = sc["p_A_scores_first"]
+    else:
+        good_sc = bad_sc = None
+
+    if good_sc:
+        good_exit_c  = round(good_sc["exit_price"] * 100, 1)
+        good_payout  = good_sc["payout_usd"]
+        good_roi     = good_sc["roi"]
+        bad_exit_c   = round(bad_sc["exit_price"] * 100, 1)
+        bad_payout   = bad_sc["payout_usd"]
+        bad_roi      = bad_sc["roi"]
+
+        hits_2x = good_roi >= 0.95   # ≥95% ROI ≈ 2x
+        sell_icon   = "🟢" if hits_2x else "🟡"
+        sell_label  = "SELL — 2x reached ✓" if hits_2x else f"SELL — est. {good_roi:.0%} gain (below 2x)"
+        sell_detail = f"sell all {sc['contracts']} contracts @ ~{good_exit_c:.0f}¢ → ${good_payout:.2f}"
+
+        cut_roi_str = f"{bad_roi:.0%}" if bad_roi < 0 else f"+{bad_roi:.0%}"
+        cut_color   = "red" if bad_roi < -0.20 else "gray"
+        cut_label   = "CUT LOSS — price will drop" if bad_roi < -0.20 else "HOLD — small impact"
+        cut_detail  = f"est. {bad_exit_c:.0f}¢ → ${bad_payout:.2f} ({cut_roi_str})"
+
+        game_plan_html = f"""
+        <div class="game-plan">
+          <div class="gp-title">📋 GAME PLAN</div>
+          <div class="gp-row">
+            <span class="gp-step buy-step">① BUY NOW</span>
+            <span class="gp-body">
+              <b>{sc['contracts']} contracts</b> × {entry_c:.0f}¢ = <b>${cost_usd:.2f} total cost</b>
+              &nbsp;·&nbsp; <span class="gray">2× target: {target_c:.0f}¢ per contract (${target_2x:.2f})</span>
+            </span>
+          </div>
+          <div class="gp-row">
+            <span class="gp-step sell-step">{sell_icon} SELL TRIGGER</span>
+            <span class="gp-body">
+              <b>{good_team}</b> scores first ({good_p:.0%} chance) → <span class="green">{sell_label}</span><br>
+              <span class="gray">{sell_detail}</span>
+            </span>
+          </div>
+          <div class="gp-row">
+            <span class="gp-step cut-step">⚠ IF WRONG</span>
+            <span class="gp-body">
+              <b>{bad_team}</b> scores first ({bad_p:.0%} chance) → <span class="{cut_color}">{cut_label}</span><br>
+              <span class="gray">{cut_detail} — your call to hold or exit</span>
+            </span>
+          </div>
+          <div class="gp-row" style="margin-top:6px;">
+            <span class="gp-step edge-step">💡 EDGE</span>
+            <span class="gp-body gray">
+              Books price this at {sig.fair_prob:.1%} · Kalshi sells it at {entry_c:.0f}¢ · you're buying {sig.edge:.1%} below fair value
+            </span>
+          </div>
+        </div>"""
+    else:
+        # Tie contract — no single goal is the trigger
+        game_plan_html = f"""
+        <div class="game-plan">
+          <div class="gp-title">📋 GAME PLAN</div>
+          <div class="gp-row">
+            <span class="gp-step buy-step">① BUY NOW</span>
+            <span class="gp-body">
+              <b>{sc['contracts']} contracts</b> × {entry_c:.0f}¢ = <b>${cost_usd:.2f}</b>
+              &nbsp;·&nbsp; <span class="gray">2× target: {target_c:.0f}¢ (${target_2x:.2f})</span>
+            </span>
+          </div>
+          <div class="gp-row">
+            <span class="gp-step sell-step">🎯 SELL TRIGGER</span>
+            <span class="gp-body">
+              Sell if price rises toward <b>{target_c:.0f}¢</b> as the match approaches.<br>
+              <span class="gray">TIE contracts gain value when the match stays level late. Watch at 60–75 min.</span>
+            </span>
+          </div>
+          <div class="gp-row">
+            <span class="gp-step cut-step">⚠ IF WRONG</span>
+            <span class="gp-body gray">Either team scoring first collapses TIE price. Exit quickly after a goal.</span>
+          </div>
+        </div>"""
+
     def fmt_scenario(sc_data: dict, scorer_key: str) -> str:
         payout = sc_data["payout_usd"]
         roi = sc_data["roi"]
@@ -214,13 +349,13 @@ def render_card(sig: Signal, stake_usd: float):
             </div>
             <div class="metric-cell">
               <div class="metric-label">ENTRY PRICE</div>
-              <div class="metric-big">{sig.entry_price:.2f}¢</div>
+              <div class="metric-big">{entry_c:.0f}¢</div>
               <div class="metric-sub">fair value: {sig.fair_prob:.1%}</div>
             </div>
             <div class="metric-cell">
               <div class="metric-label">CONTRACTS (${stake_usd:.0f})</div>
               <div class="metric-big">{sc["contracts"]}</div>
-              <div class="metric-sub">cost ≈ ${sc["cost_usd"]:.2f}</div>
+              <div class="metric-sub">cost ≈ ${cost_usd:.2f}</div>
             </div>
             <div class="metric-cell">
               <div class="metric-label">EDGE</div>
@@ -234,8 +369,10 @@ def render_card(sig: Signal, stake_usd: float):
             </div>
           </div>
           <div class="divider"></div>
+          {game_plan_html}
+          <div class="divider"></div>
           <div style="font-size:12px; color:#a8b4cc; margin-bottom:10px; font-weight:700; letter-spacing:0.05em;">
-            🎯 FIRST GOAL SCENARIOS — ESTIMATED CASH OUT
+            📊 FIRST GOAL PRICE IMPACT
           </div>
           <div class="scenarios-row">
             <div class="scenario-block">
