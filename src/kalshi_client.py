@@ -13,18 +13,33 @@ _private_key = None
 def _load_private_key():
     global _private_key
     if _private_key is None:
-        # Prefer env var (for cloud deploy) — supports both raw PEM and base64-encoded
-        pem_env = os.getenv("KALSHI_PRIVATE_KEY", "")
-        if pem_env:
-            pem_bytes = (
-                base64.b64decode(pem_env)
-                if not pem_env.strip().startswith("-----")
-                else pem_env.encode("utf-8")
-            )
-        else:
+        pem_bytes = None
+
+        # 1. Try Streamlit secrets (cloud deploy) — handles multi-line PEM natively
+        try:
+            import streamlit as st
+            val = st.secrets.get("KALSHI_PRIVATE_KEY", "")
+            if val:
+                pem_bytes = val.encode("utf-8") if val.strip().startswith("-----") \
+                            else base64.b64decode(val)
+        except Exception:
+            pass
+
+        # 2. Fall back to env var
+        if not pem_bytes:
+            pem_env = os.getenv("KALSHI_PRIVATE_KEY", "")
+            if pem_env:
+                pem_bytes = pem_env.encode("utf-8") if pem_env.strip().startswith("-----") \
+                            else base64.b64decode(pem_env)
+
+        # 3. Fall back to local file
+        if not pem_bytes:
             with open(KALSHI_PRIVATE_KEY_PATH, "rb") as f:
                 pem_bytes = f.read()
-        _private_key = serialization.load_pem_private_key(pem_bytes, password=None, backend=default_backend())
+
+        _private_key = serialization.load_pem_private_key(
+            pem_bytes, password=None, backend=default_backend()
+        )
     return _private_key
 
 
