@@ -199,26 +199,33 @@ def render_card(sig: Signal, stake_usd: float):
         good_sc = bad_sc = good_team = bad_team = None
         good_p  = bad_p = 0.5
 
-    # ── Narrative: headline + why ─────────────────────────────────────────────
+    # ── Narrative: headline + action + why ───────────────────────────────────
     if sig.side == "yes":
-        headline = f"{sig.outcome} looks undervalued — Kalshi hasn't caught up to the books yet"
+        headline    = f"Buy {sig.outcome} to win — they're priced too cheap on Kalshi right now"
+        kalshi_action = (
+            f"On Kalshi: search <b>\"{sig.game_title}\"</b> → tap <b>{sig.outcome}</b> → tap <b>YES</b> → buy"
+        )
         why_html = (
             f"Major sportsbooks across 10+ platforms give <b>{sig.outcome}</b> a "
             f"<span class='hi'>{fair_c}%</span> chance to win. "
-            f"Kalshi is still pricing them at <span class='lo'>{entry_c}¢</span> — "
-            f"a <b>{sig.edge:.0%} gap</b> in your favor. "
-            f"That gap is your edge: buy now before the market corrects."
+            f"Kalshi is pricing them at only <span class='lo'>{entry_c}¢</span> — "
+            f"<b>{sig.edge:.0%} below what they should be.</b> "
+            f"That discount is your edge. Buy now before Kalshi catches up."
         )
     else:
         kalshi_yes_c = round((1 - sig.entry_price) * 100)
-        other_team = sig.team_b if sig.outcome.lower() in sig.team_a.lower() else sig.team_a
-        headline = f"{sig.outcome} is overpriced on Kalshi — the crowd is too confident"
+        other_team   = sig.team_b if sig.outcome.lower() in sig.team_a.lower() else sig.team_a
+        headline     = f"Bet against {sig.outcome} — back {other_team} or a draw instead"
+        kalshi_action = (
+            f"On Kalshi: search <b>\"{sig.game_title}\"</b> → tap <b>{sig.outcome}</b> → tap <b>NO</b> → buy. "
+            f"<span class='m'>(Buying NO on {sig.outcome} = you win if {other_team} wins OR the game draws.)</span>"
+        )
         why_html = (
-            f"Kalshi bettors are pricing <b>{sig.outcome}</b> at "
-            f"<span class='lo'>{kalshi_yes_c}¢</span> to win, but major sportsbooks "
-            f"only give them <span class='hi'>{fair_c}%</span>. "
-            f"Buying NO means you're betting against the hype — "
-            f"you win if <b>{other_team}</b> wins or the match draws."
+            f"Kalshi has <b>{sig.outcome}</b> at <span class='lo'>{kalshi_yes_c}¢</span> to win — "
+            f"but real sportsbooks only price them at <span class='hi'>{fair_c}%</span>. "
+            f"The Kalshi crowd is too bullish on {sig.outcome}. "
+            f"Buying NO costs <b>{entry_c}¢</b> and pays $1 if {sig.outcome} fails to win — "
+            f"either {other_team} wins or it ends in a draw."
         )
 
     # ── Steps ────────────────────────────────────────────────────────────────
@@ -327,10 +334,17 @@ def render_card(sig: Signal, stake_usd: float):
           <div class="opp-why">{why_html}</div>
 
           <div class="play-block">
+            <div class="play-row" style="background:#0d1e36; border:1px solid #1e3a5f;">
+              <div class="play-icon">📲</div>
+              <div class="play-content">
+                <div class="play-label">Kalshi action</div>
+                <div class="play-text">{kalshi_action}</div>
+              </div>
+            </div>
             <div class="play-row">
               <div class="play-icon">①</div>
               <div class="play-content">
-                <div class="play-label">Buy now</div>
+                <div class="play-label">How much</div>
                 <div class="play-text">{buy_text}</div>
               </div>
             </div>
