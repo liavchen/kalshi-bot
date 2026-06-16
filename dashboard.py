@@ -139,6 +139,22 @@ st.success(
     f"+ **{watch_count} watching** across {total_days} game days"
 )
 
+# ── Shared helpers ────────────────────────────────────────────────────────────
+from collections import defaultdict
+from datetime import datetime
+
+def _date_sort_key(date_str: str) -> tuple:
+    try:
+        return datetime.strptime(f"{date_str} 2026", "%b %d %Y").timetuple()[:3]
+    except Exception:
+        return (9999,)
+
+def _edge_emoji(edge: float) -> str:
+    if edge >= 0.05: return "🟢"
+    if edge >= 0.03: return "🟠"
+    if edge >= 0.02: return "🟡"
+    return "🔴"
+
 # ── Portfolio Builder ──────────────────────────────────────────────────────────
 @st.cache_data(ttl=60, show_spinner=False)
 def fetch_balance() -> float:
@@ -155,36 +171,48 @@ with st.expander("💼 Portfolio Builder — spread your budget across signals",
         st.info("No actionable signals right now. Lower the edge threshold to see more options.")
     else:
         kalshi_balance = fetch_balance()
-        if kalshi_balance > 0:
-            st.caption(f"💰 Your Kalshi cash balance: **${kalshi_balance:.2f}**")
-        else:
-            st.caption("💰 Could not fetch balance — enter manually below.")
 
-        pb_budget = st.number_input(
-            "Budget to deploy ($)",
-            min_value=1.0,
-            max_value=float(kalshi_balance) if kalshi_balance > 0 else 500.0,
-            value=float(kalshi_balance) if kalshi_balance > 0 else 5.0,
-            step=0.5,
-            key="pb_budget",
-            help="Defaults to your full Kalshi balance. Lower it to keep some cash in reserve."
-        )
+        bal_col, budget_col = st.columns([1, 2])
+        with bal_col:
+            if kalshi_balance > 0:
+                st.metric("Your Kalshi balance", f"${kalshi_balance:.2f}")
+            else:
+                st.warning("⚠️ Could not fetch Kalshi balance — enter budget manually.")
+        with budget_col:
+            pb_budget = st.number_input(
+                "Budget to deploy ($)",
+                min_value=1.0,
+                max_value=float(kalshi_balance) if kalshi_balance > 0 else 500.0,
+                value=float(kalshi_balance) if kalshi_balance > 0 else 5.0,
+                step=0.5,
+                key="pb_budget",
+                help="Defaults to your full Kalshi balance. Lower it to keep some cash in reserve."
+            )
+
         st.caption("Pick the signals you want to play — we'll split your budget weighted by edge strength.")
 
-        # Checkbox for each actionable signal
-        top_signals = sorted(signals, key=lambda x: -x.edge)[:12]
-        selected_keys = []
-        for sig in top_signals:
-            side_label = "YES" if sig.side == "yes" else "NO"
-            label = (
-                f"**{sig.game_title}** ({sig.game_date}) — "
-                f"{sig.outcome} {side_label} · Edge **+{sig.edge:.1%}** · "
-                f"Kalshi: {round(sig.entry_price*100)}¢ · Books: {round(sig.fair_prob*100)}%"
-            )
-            if st.checkbox(label, key=f"pb_{sig.kalshi_ticker}"):
-                selected_keys.append(sig.kalshi_ticker)
+        # Checkboxes grouped by date with edge color
+        pb_by_date: dict[str, list] = defaultdict(list)
+        for sig in signals:
+            pb_by_date[sig.game_date or "Unknown"].append(sig)
+        pb_sorted_dates = sorted(pb_by_date.keys(), key=_date_sort_key)
 
-        selected_sigs = [s for s in top_signals if s.kalshi_ticker in selected_keys]
+        selected_keys = []
+        for pb_date in pb_sorted_dates:
+            day_sigs = sorted(pb_by_date[pb_date], key=lambda x: -x.edge)
+            st.markdown(f"**📅 {pb_date}**")
+            for sig in day_sigs:
+                side_label = "YES" if sig.side == "yes" else "NO"
+                dot = _edge_emoji(sig.edge)
+                label = (
+                    f"{dot} **{sig.game_title}** — "
+                    f"{sig.outcome} {side_label} · Edge **+{sig.edge:.1%}** · "
+                    f"Kalshi: {round(sig.entry_price*100)}¢ · Books: {round(sig.fair_prob*100)}%"
+                )
+                if st.checkbox(label, key=f"pb_{sig.kalshi_ticker}"):
+                    selected_keys.append(sig.kalshi_ticker)
+
+        selected_sigs = [s for s in signals if s.kalshi_ticker in selected_keys]
 
         if selected_sigs:
             st.divider()
@@ -242,22 +270,12 @@ with st.expander("💼 Portfolio Builder — spread your budget across signals",
                 "Allocation is weighted by edge — stronger mispricings get more of your budget. "
                 "Minimum $1 per bet. 'If wins' assumes price reaches fair value (not full $1 payout)."
             )
-        elif selected_keys == [] and len(top_signals) > 0:
+        elif not selected_keys and signals:
             st.info("Check the signals above to see your portfolio plan.")
 
 st.divider()
 
 # ── Group by date ─────────────────────────────────────────────────────────────
-from collections import defaultdict
-from datetime import datetime
-
-def _date_sort_key(date_str: str) -> tuple:
-    """Sort 'Jun 22', 'Jun 23' etc chronologically."""
-    try:
-        return datetime.strptime(f"{date_str} 2026", "%b %d %Y").timetuple()[:3]
-    except Exception:
-        return (9999,)
-
 by_date: dict[str, list] = defaultdict(list)
 for s in all_signals:
     by_date[s.game_date or "Unknown"].append(s)
