@@ -99,10 +99,13 @@ with col_refresh:
 st.divider()
 
 # ── Scanner ───────────────────────────────────────────────────────────────────
-@st.cache_data(ttl=900, show_spinner=False)   # cache 15 minutes
+WATCH_THRESHOLD = 0.01   # always scan at ≥1% to show same-day games
+
+@st.cache_data(ttl=900, show_spinner=False)
 def run_scan(edge_threshold: float) -> list[Signal]:
     import os
-    os.environ["EDGE_THRESHOLD"] = str(edge_threshold)
+    # Scan wide — always pull everything ≥1% so same-day games appear
+    os.environ["EDGE_THRESHOLD"] = str(WATCH_THRESHOLD)
     import importlib, src.config as cfg
     importlib.reload(cfg)
     import src.strategy as strat
@@ -115,16 +118,26 @@ if refresh:
 
 with st.spinner("Scanning Kalshi + odds API..."):
     try:
-        signals = run_scan(threshold)
+        all_signals = run_scan(threshold)
     except Exception as e:
         st.error(f"Scan error: {e}")
         st.stop()
 
-if not signals:
-    st.info("No opportunities found above the edge threshold. Try lowering it or check back later.")
+# Split: actionable (above user slider) vs watching (1%–slider)
+signals      = [s for s in all_signals if s.edge >= threshold]
+watch_signals = [s for s in all_signals if s.edge < threshold]
+
+if not all_signals:
+    st.info("No opportunities found. Try refreshing or check back later.")
     st.stop()
 
-st.success(f"Found **{len(signals)} opportunities** across {len(set(s.game_date for s in signals))} game days")
+hot_count   = len(signals)
+watch_count = len(watch_signals)
+total_days  = len(set(s.game_date for s in all_signals))
+st.success(
+    f"Found **{hot_count} actionable** {'opportunity' if hot_count == 1 else 'opportunities'} "
+    f"+ **{watch_count} watching** across {total_days} game days"
+)
 
 # ── Group by date ─────────────────────────────────────────────────────────────
 from collections import defaultdict
@@ -138,10 +151,23 @@ def _date_sort_key(date_str: str) -> tuple:
         return (9999,)
 
 by_date: dict[str, list] = defaultdict(list)
-for s in signals:
+for s in all_signals:
     by_date[s.game_date or "Unknown"].append(s)
 
 sorted_dates = sorted(by_date.keys(), key=_date_sort_key)
+
+def _day_grade(sigs: list, user_threshold: float) -> tuple[str, str]:
+    """Return (emoji, label) for the day based on best edge found."""
+    actionable = [s for s in sigs if s.edge >= user_threshold]
+    best = max((s.edge for s in sigs), default=0)
+    if actionable and best >= 0.05:
+        return "🟢", "STRONG"
+    elif actionable and best >= 0.03:
+        return "🟠", "GOOD"
+    elif actionable:
+        return "🟡", "MODERATE"
+    else:
+        return "🔴", "WATCHING"
 
 # ── Render cards ──────────────────────────────────────────────────────────────
 def render_card(sig: Signal, stake_usd: float):
@@ -377,29 +403,49 @@ def render_card(sig: Signal, stake_usd: float):
 
 
 for date in sorted_dates:
-    day_sigs = by_date[date]
-    yes_sigs = sorted([s for s in day_sigs if s.side == "yes"], key=lambda x: -x.roi_target)
-    no_sigs  = sorted([s for s in day_sigs if s.side == "no"],  key=lambda x: -x.roi_target)
+    day_sigs   = by_date[date]
+    grade_emoji, grade_label = _day_grade(day_sigs, threshold)
 
-    # Today or tomorrow get expanded by default
-    is_soon = sorted_dates.index(date) < 2
-    label = f"📅 **{date}** — {len(day_sigs)} signal{'s' if len(day_sigs) != 1 else ''}"
-    if yes_sigs:
-        label += f"  🟢 {len(yes_sigs)} BUY YES"
-    if no_sigs:
-        label += f"  🟠 {len(no_sigs)} BUY NO"
+    # Actionable vs watching for this day
+    act_sigs   = sorted([s for s in day_sigs if s.edge >= threshold], key=lambda x: -x.edge)
+    watch_sigs = sorted([s for s in day_sigs if s.edge < threshold],  key=lambda x: -x.edge)
+
+    yes_act  = [s for s in act_sigs  if s.side == "yes"]
+    no_act   = [s for s in act_sigs  if s.side == "no"]
+
+    # First 2 dates auto-expand; STRONG days always expand
+    is_soon = sorted_dates.index(date) < 2 or grade_label == "STRONG"
+
+    label = f"{grade_emoji} **{date}** — {grade_label}"
+    if act_sigs:
+        label += f"  ·  {len(act_sigs)} actionable"
+    if watch_sigs:
+        label += f"  ·  {len(watch_sigs)} watching"
 
     with st.expander(label, expanded=is_soon):
-        if yes_sigs:
-            st.markdown("#### 🟢 Buy YES — Kalshi underpricing")
-            for sig in yes_sigs:
-                render_card(sig, stake)
 
-        if no_sigs:
-            st.markdown("#### 🟠 Buy NO — Short overpriced favorites")
-            st.caption("Kalshi prices these favorites higher than sharp books. Buy NO = bet the favorite DOESN'T win.")
-            for sig in no_sigs:
-                render_card(sig, stake)
+        if act_sigs:
+            if yes_act:
+                st.markdown("#### 🟢 Buy YES — underpriced on Kalshi")
+                for sig in yes_act:
+                    render_card(sig, stake)
+            if no_act:
+                st.markdown("#### 🟠 Bet against — overpriced favorites")
+                for sig in no_act:
+                    render_card(sig, stake)
+
+        if watch_sigs:
+            st.markdown("##### 👀 Watching — edge below your threshold")
+            for sig in watch_sigs:
+                edge_pct = f"+{sig.edge:.1%}"
+                entry_c  = round(sig.entry_price * 100)
+                fair_c   = round(sig.fair_prob * 100)
+                action   = "BUY YES" if sig.side == "yes" else f"BUY NO (back {sig.team_b if sig.outcome.lower() in sig.team_a.lower() else sig.team_a})"
+                st.markdown(
+                    f"**{sig.game_title}** — {sig.outcome} · {action} · "
+                    f"Kalshi: {entry_c}¢ · Books: {fair_c}% · Edge: **{edge_pct}** · "
+                    f"_Lower threshold to see full plan_"
+                )
 
 st.divider()
 st.markdown(
